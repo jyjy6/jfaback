@@ -23,16 +23,16 @@ import java.util.Map;
 @RequestMapping("/api/v1/ai")
 public class AIController {
 
-    @Qualifier("assistantWithTools")
-    private final Assistant assistantWithTools;
+    @Qualifier("assistant")
+    private final Assistant assistant;
 
 
 
     @PostMapping("/chat")
     public String chat(@RequestBody Map<String, String> request, @AuthenticationPrincipal CustomUserDetails customUserDetails) {
         String message = request.get("message");
-        log.info("Admin chat message from {}: {}", customUserDetails.getUsername(), message);
+        log.info("Chat message from {}: {}", customUserDetails.getUsername(), message);
 
-        return assistantWithTools.chat(customUserDetails.getId(),customUserDetails.getUsername(), message);
+        return assistant.chat(customUserDetails.getUsername(), message);
     }
 }

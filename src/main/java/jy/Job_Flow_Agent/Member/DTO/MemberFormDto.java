@@ -75,8 +75,6 @@ public class MemberFormDto {
                 .phone(this.phone)
                 .sex(this.sex)
                 .age(this.age)
-                .height(this.height)
-                .weight(this.weight)
                 .privacyAccepted(this.privacyAccepted)
                 .termsAccepted(this.termsAccepted)
                 .marketingAccepted(this.marketingAccepted)
@@ -89,8 +87,7 @@ public class MemberFormDto {
         member.setPhone(this.phone);
         member.setSex(this.sex);
         member.setAge(this.age);
-        member.setHeight(this.height);
-        member.setWeight(this.weight);
+
         member.setMarketingAccepted(this.marketingAccepted);
         // password는 따로 처리하므로 여기선 제외
     }
@@ -101,8 +98,6 @@ public class MemberFormDto {
         member.setPhone(this.phone);
         member.setSex(this.sex);
         member.setAge(this.age);
-        member.setHeight(this.height);
-        member.setWeight(this.weight);
         member.setRoles(this.roles);
         member.setPremium(this.isPremium);
         member.setMarketingAccepted(this.marketingAccepted);

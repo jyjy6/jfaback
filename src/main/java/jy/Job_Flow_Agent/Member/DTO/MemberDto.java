@@ -80,8 +80,6 @@ public class MemberDto {
                 .email(member.getEmail())
                 .age(member.getAge())
                 .sex(member.getSex())
-                .height(member.getHeight())
-                .weight(member.getWeight())
                 .phone(member.getPhone())
                 .createdAt(member.getCreatedAt())
                 .updatedAt(member.getUpdatedAt())

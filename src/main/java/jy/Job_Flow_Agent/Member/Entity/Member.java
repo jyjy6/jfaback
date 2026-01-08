@@ -42,9 +42,6 @@ public class Member {
 
     private String sex;
     private Integer age;
-    private Double height;
-    private Double weight;
-
 
 
     private LocalDateTime lastLogin;
