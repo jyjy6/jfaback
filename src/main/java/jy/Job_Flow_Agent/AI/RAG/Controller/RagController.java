@@ -3,6 +3,7 @@ package jy.Job_Flow_Agent.AI.RAG.Controller;
 
 import jy.Job_Flow_Agent.AI.RAG.DTO.RagDTO;
 import jy.Job_Flow_Agent.AI.RAG.Service.RagService;
+import jy.Job_Flow_Agent.Auth.Util.AuthUtils;
 import jy.Job_Flow_Agent.GlobalErrorHandler.GlobalException;
 import jy.Job_Flow_Agent.Member.Service.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * RAG 시스템 REST API 컨트롤러
- * 
+ * <p>
  * 제공 API:
  * 1. POST /api/rag/ingest - 파일 업로드 및 임베딩
  * 2. POST /api/rag/ingest/text - 텍스트 직접 입력
@@ -44,7 +45,7 @@ public class RagController {
         log.info("Received file upload request: {}", file.getOriginalFilename());
 
         if (file.isEmpty()) {
-            throw new GlobalException("파일이 없습니다.","EMPTY_FILE", HttpStatus.BAD_REQUEST);
+            throw new GlobalException("파일이 없습니다.", "EMPTY_FILE", HttpStatus.BAD_REQUEST);
 
         }
 
@@ -62,7 +63,7 @@ public class RagController {
         log.info("Received text ingestion request: {}", request.getDocumentName());
 
         if (request.getText() == null || request.getText().trim().isEmpty()) {
-            throw new GlobalException("텍스트가 비어있습니다.","EMPTY_QUESTION", HttpStatus.BAD_REQUEST);
+            throw new GlobalException("텍스트가 비어있습니다.", "EMPTY_QUESTION", HttpStatus.BAD_REQUEST);
         }
 
         RagDTO.IngestResponse response = ragService.ingestText(request, customUserDetails);
@@ -95,7 +96,7 @@ public class RagController {
         log.info("Received search request: {}", request.getQuery());
 
         if (request.getQuery() == null || request.getQuery().trim().isEmpty()) {
-            throw new GlobalException("텍스트가 비어있습니다.","EMPTY_QUESTION", HttpStatus.BAD_REQUEST);
+            throw new GlobalException("텍스트가 비어있습니다.", "EMPTY_QUESTION", HttpStatus.BAD_REQUEST);
         }
 
         RagDTO.SearchResponse response = ragService.search(request, customUserDetails);
@@ -136,10 +137,12 @@ public class RagController {
     /**
      * 문서 삭제
      */
-    @DeleteMapping("/documents/{id}")
-    public ResponseEntity<RagDTO.DeleteResponse> deleteDocument(@PathVariable Long id) {
-        log.info("Deleting document with id: {}", id);
-        RagDTO.DeleteResponse response = ragService.deleteDocument(id);
+    @DeleteMapping("/documents/delete/{id}")
+    public ResponseEntity<RagDTO.DeleteResponse> deleteDocument(@AuthenticationPrincipal CustomUserDetails customUserDetails,
+                                                                @PathVariable("id") Long documentId) {
+
+        log.info("Deleting document with id: {}", documentId);
+        RagDTO.DeleteResponse response = ragService.deleteDocument(documentId, customUserDetails);
         return ResponseEntity.ok(response);
     }
 

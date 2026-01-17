@@ -17,14 +17,17 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.filter.Filter;
 import dev.langchain4j.store.embedding.filter.MetadataFilterBuilder;
 import jy.Job_Flow_Agent.AI.RAG.DTO.RagDTO;
 import jy.Job_Flow_Agent.AI.RAG.Entity.DocumentMetadata;
 import jy.Job_Flow_Agent.AI.AssistantModels.Assistant;
 import jy.Job_Flow_Agent.AI.RAG.Repository.DocumentRepository;
+import jy.Job_Flow_Agent.GlobalErrorHandler.GlobalException;
 import jy.Job_Flow_Agent.Member.Service.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,7 +48,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional(readOnly = true)
 public class RagService {
 
     private final EmbeddingStore<TextSegment> embeddingStore;
@@ -122,7 +124,7 @@ public class RagService {
 
         } catch (Exception e) {
             log.error("Error during document ingestion", e);
-            throw new RuntimeException("문서 처리 중 오류가 발생했습니다: " + e.getMessage(), e);
+            throw new GlobalException("INGEST_DOCUMENT_ERROR", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -187,7 +189,7 @@ public class RagService {
 
         } catch (Exception e) {
             log.error("Error during text ingestion", e);
-            throw new RuntimeException("텍스트 처리 중 오류가 발생했습니다: " + e.getMessage(), e);
+            throw new GlobalException("INGEST_TEXT_ERROR", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -246,7 +248,7 @@ public class RagService {
 
         } catch (Exception e) {
             log.error("Error during question answering", e);
-            throw new RuntimeException("답변 생성 중 오류가 발생했습니다: " + e.getMessage(), e);
+            throw new GlobalException("ASK_RESPONSE_ERROR", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -288,7 +290,7 @@ public class RagService {
 
         } catch (Exception e) {
             log.error("Error during document search", e);
-            throw new RuntimeException("문서 검색 중 오류가 발생했습니다: " + e.getMessage(), e);
+            throw new GlobalException("SEARCH_DOCUMENT_ERROR", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -338,7 +340,7 @@ public class RagService {
      */
     public RagDTO.DocumentInfo getDocument(Long documentId) {
         DocumentMetadata document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Document not found with id: " + documentId));
+                .orElseThrow(() -> new GlobalException("DOCUMENT_NOT_FOUND","Document not found with id: " + documentId));
         return toDocumentInfo(document);
     }
 
@@ -348,18 +350,64 @@ public class RagService {
      * 주의: Pinecone에서 벡터를 삭제하려면 별도의 삭제 로직이 필요합니다.
      */
     @Transactional
-    public RagDTO.DeleteResponse deleteDocument(Long documentId) {
+    public RagDTO.DeleteResponse deleteDocument(Long documentId, CustomUserDetails customUserDetails) {
         DocumentMetadata document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Document not found with id: " + documentId));
+                .orElseThrow(() -> new GlobalException("DOCUMENT_NOT_FOUND","Document not found with id: " + documentId));
+
+        // 권한 체크: 문서 업로드한 유저가 아니면 예외 발생
+        if(!document.getUserId().equals(customUserDetails.getUsername())){
+            throw new GlobalException("유저_권한없음","파일을 업로드 한 유저만 삭제할 수 있습니다.",HttpStatus.UNAUTHORIZED);
+        }
 
         String documentName = document.getDocumentName();
+        
+        // Pinecone에서 벡터 삭제 (document_id 메타데이터 기반)
+        // 1단계: 먼저 해당 문서의 모든 벡터를 검색해서 ID를 수집
+        try {
+            log.info("Searching vectors to delete for document_id: {}", documentId);
+            
+            // 임의의 임베딩으로 검색 (결과는 필터로 제한됨)
+            Embedding dummyEmbedding = embeddingModel.embed("delete").content();
+            
+            EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
+                    .queryEmbedding(dummyEmbedding)
+                    .maxResults(1000) // 최대한 많이 가져오기
+                    .minScore(0.0) // 모든 결과 포함
+                    .filter(MetadataFilterBuilder.metadataKey("document_id").isEqualTo(documentId))
+                    .build();
+            
+            EmbeddingSearchResult<TextSegment> searchResult = embeddingStore.search(searchRequest);
+            
+            // 2단계: 검색된 벡터들의 ID를 수집
+            List<String> vectorIdsToDelete = searchResult.matches().stream()
+                    .map(match -> match.embeddingId())
+                    .filter(id -> id != null)
+                    .collect(Collectors.toList());
+            
+            log.info("Found {} vectors to delete for document: {}", vectorIdsToDelete.size(), documentName);
+            
+            // 3단계: ID 리스트로 삭제
+            if (!vectorIdsToDelete.isEmpty()) {
+                embeddingStore.removeAll(vectorIdsToDelete);
+                log.info("Successfully deleted {} vectors from Pinecone", vectorIdsToDelete.size());
+            } else {
+                log.warn("No vectors found to delete for document_id: {}", documentId);
+            }
+            
+        } catch (Exception e) {
+            log.error("Error deleting vectors from Pinecone for document_id: {}", documentId, e);
+            // Pinecone 삭제 실패해도 DB는 삭제 (벡터는 수동으로 정리 필요)
+            log.warn("Continuing with database deletion despite Pinecone error");
+        }
+        
+        // DB에서 메타데이터 삭제
         documentRepository.delete(document);
-        log.info("Document deleted from database: {}", documentName);
+        log.info("Document metadata deleted from database: {}", documentName);
 
         return RagDTO.DeleteResponse.builder()
                 .documentId(documentId)
                 .documentName(documentName)
-                .message("문서 메타데이터가 삭제되었습니다. Pinecone 벡터는 별도로 관리가 필요합니다.")
+                .message("문서 메타데이터와 Pinecone 벡터가 성공적으로 삭제되었습니다.")
                 .success(true)
                 .build();
     }

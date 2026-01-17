@@ -35,4 +35,6 @@ public class AIController {
 
         return assistant.chat(customUserDetails.getUsername(), message);
     }
+
+
 }
