@@ -44,6 +44,8 @@ import java.util.stream.Collectors;
  * 2. 벡터 검색
  * 3. RAG 기반 질의응답
  * 4. 문서 관리
+ * 
+ * 이 서비스항목은 레거시항목이고 AI가 사용할 함수들은 Tool로써 만들음
  */
 @Service
 @RequiredArgsConstructor
@@ -394,15 +396,16 @@ public class RagService {
                 log.warn("No vectors found to delete for document_id: {}", documentId);
             }
             
+            // Pinecone 삭제 성공 후 DB 삭제
+            documentRepository.delete(document);
+            log.info("Document metadata deleted from database: {}", documentName);
+            
         } catch (Exception e) {
             log.error("Error deleting vectors from Pinecone for document_id: {}", documentId, e);
-            // Pinecone 삭제 실패해도 DB는 삭제 (벡터는 수동으로 정리 필요)
-            log.warn("Continuing with database deletion despite Pinecone error");
+            throw new GlobalException("PINECONE_DELETE_ERROR", 
+                    "Pinecone 벡터 삭제 중 오류가 발생했습니다. DB 메타데이터는 유지됩니다: " + e.getMessage(), 
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        
-        // DB에서 메타데이터 삭제
-        documentRepository.delete(document);
-        log.info("Document metadata deleted from database: {}", documentName);
 
         return RagDTO.DeleteResponse.builder()
                 .documentId(documentId)

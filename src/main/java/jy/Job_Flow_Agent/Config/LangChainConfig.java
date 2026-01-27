@@ -16,6 +16,7 @@ import dev.langchain4j.store.embedding.pinecone.PineconeEmbeddingStore;
 import jy.Job_Flow_Agent.AI.AssistantModels.Assistant;
 import jy.Job_Flow_Agent.AI.AssistantModels.StreamingAssistant;
 import jy.Job_Flow_Agent.AI.Tools.MemberSearchTools;
+import jy.Job_Flow_Agent.AI.Tools.RagTools;
 import jy.Job_Flow_Agent.AI.Tools.UtilTools;
 import jy.Job_Flow_Agent.GlobalErrorHandler.GlobalException;
 import jy.Job_Flow_Agent.Redis.RedisChatMemoryStore;
@@ -54,14 +55,13 @@ public class LangChainConfig {
 
     /**
      * 통합 AI Assistant
-     * - Tools: 회원 정보 조회, 유틸리티 등
-     * - RAG: 문서 검색 (ContentRetriever)
+     * - Tools: 회원 정보 조회, 유틸리티, RAG 문서 검색 (사용자별 필터링)
      * - ChatMemory: 대화 문맥 유지 (Redis)
      */
     @Bean("assistant")
     public Assistant assistant(MemberSearchTools memberSearchTools,
                                UtilTools utilTools,
-                               ContentRetriever contentRetriever) {
+                               RagTools ragTools) {
         if (apiKey == null) {
             throw new GlobalException("GEMINI_API_KEY_ERROR", "GEMINI_API_KEY not set in environment variables", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -77,8 +77,7 @@ public class LangChainConfig {
 
         return AiServices.builder(Assistant.class)
                 .chatLanguageModel(model)
-                .tools(memberSearchTools, utilTools) // 도구 등록
-                .contentRetriever(contentRetriever)  // RAG 검색기 등록
+                .tools(memberSearchTools, utilTools, ragTools) // 도구 등록 (RagTools 추가)
                 .chatMemoryProvider(userId -> MessageWindowChatMemory.builder()
                         .id(userId)
                         .maxMessages(20)
