@@ -34,8 +34,8 @@ public class DocumentMetadata {
     /**
      * 문서 소유자 ID (사용자 식별용)
      */
-    @Column(name = "user_id", nullable = false)
-    private String userId;
+    @Column(name = "username", nullable = false)
+    private String username;
 
     /**
      * 문서 이름 (파일명)

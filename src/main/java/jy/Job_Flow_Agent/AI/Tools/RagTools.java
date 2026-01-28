@@ -41,7 +41,7 @@ public class RagTools {
      * - "저장된 채용공고 중에 XX 회사 정보 찾아줘" 같은 요청이 들어올 때
      * 
      * @param query 검색할 질문 또는 키워드
-     * @param userId 현재 사용자 ID (해당 유저의 문서만 검색)
+     * @param username 현재 사용자 ID (해당 유저의 문서만 검색)
      * @return 검색된 관련 문서 내용과 출처 정보
      */
     @Tool("사용자가 업로드한 문서(이력서, 채용공고, 메모 등)에서 관련 정보를 검색합니다. " +
@@ -49,9 +49,9 @@ public class RagTools {
           "예: '내 이력서에...', '업로드한 문서에서...', '저장된 공고 중...' 등")
     public String searchUserDocuments(
             @P("검색할 질문 또는 키워드") String query,
-            @P("현재 사용자 ID") String userId) {
+            @P("현재 사용자 ID") String username) {
         
-        log.info("🔍 RAG Tool 호출 - Query: '{}', User: '{}'", query, userId);
+        log.info("🔍 RAG Tool 호출 - Query: '{}', User: '{}'", query, username);
         
         try {
             // 1. 질문을 임베딩으로 변환
@@ -62,7 +62,7 @@ public class RagTools {
                     .queryEmbedding(queryEmbedding)
                     .maxResults(5)      // 상위 5개 문서 검색
                     .minScore(0.6)      // 유사도 60% 이상만 반환
-                    .filter(MetadataFilterBuilder.metadataKey("userId").isEqualTo(userId))
+                    .filter(MetadataFilterBuilder.metadataKey("username").isEqualTo(username))
                     .build();
 
             EmbeddingSearchResult<TextSegment> searchResult = embeddingStore.search(searchRequest);

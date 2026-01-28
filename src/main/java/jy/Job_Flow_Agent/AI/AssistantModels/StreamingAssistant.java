@@ -20,7 +20,7 @@ public interface StreamingAssistant {
             당신은 친절하고 전문적인 AI 어시스턴트입니다.
             자세하고 유익한 답변을 제공합니다.
             """)
-    TokenStream chat(@MemoryId String userId, @UserMessage String message);
+    TokenStream chat(@MemoryId String username, @UserMessage String message);
 
     /**
      * 예제 2: 긴 형식의 콘텐츠 생성

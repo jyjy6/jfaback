@@ -78,7 +78,7 @@ public class RagService {
             documentEntity = documentRepository.save(documentEntity);
             final Long documentId = documentEntity.getId();
             final String documentName = documentEntity.getDocumentName();
-            final String userId = user.getUsername();
+            final String username = user.getUsername();
             log.info("Document metadata saved with ID: {}", documentId);
 
             // 2. 문서 파싱
@@ -101,7 +101,7 @@ public class RagService {
                             segment.metadata()
                                     .put("document_id", documentId)
                                     .put("document_name", documentName)
-                                    .put("userId", userId) // 사용자 식별을 위한 메타데이터 추가
+                                    .put("username", username) // 사용자 식별을 위한 메타데이터 추가
                     ))
                     .toList();
 
@@ -145,12 +145,12 @@ public class RagService {
                     .fileSize((long) request.getText().length())
                     .description(request.getDescription())
                     .status(DocumentMetadata.DocumentStatus.PROCESSING)
-                    .userId(user.getUsername())
+                    .username(user.getUsername())
                     .build();
             documentEntity = documentRepository.save(documentEntity);
             final Long documentId = documentEntity.getId();
             final String documentName = documentEntity.getDocumentName();
-            final String userId = user.getUsername();
+            final String username = user.getUsername();
 
             // 2. 텍스트를 Document로 변환
             Document document = Document.from(request.getText());
@@ -167,7 +167,7 @@ public class RagService {
                             segment.metadata()
                                     .put("document_id", documentId)
                                     .put("document_name", documentName)
-                                    .put("userId", userId)
+                                    .put("username", username)
                     ))
                     .toList();
 
@@ -215,7 +215,7 @@ public class RagService {
                     .queryEmbedding(queryEmbedding)
                     .maxResults(5) // maxResults (기본값 설정)
                     .minScore(0.6) // minScore (유사도 임계값)
-                    .filter(MetadataFilterBuilder.metadataKey("userId").isEqualTo(user.getUsername()))
+                    .filter(MetadataFilterBuilder.metadataKey("username").isEqualTo(user.getUsername()))
                     .build();
 
             EmbeddingSearchResult<TextSegment> searchResult = embeddingStore.search(searchRequest);
@@ -267,7 +267,7 @@ public class RagService {
                     .queryEmbedding(queryEmbedding)
                     .maxResults(10) // maxResults
                     .minScore(0.5) // minScore
-                    .filter(MetadataFilterBuilder.metadataKey("userId").isEqualTo(user.getUsername()))
+                    .filter(MetadataFilterBuilder.metadataKey("username").isEqualTo(user.getUsername()))
                     .build();
 
             EmbeddingSearchResult<TextSegment> searchResult = embeddingStore.search(searchRequest);
@@ -318,8 +318,8 @@ public class RagService {
      * 사용자별 문서 목록 조회
      */
     public RagDTO.DocumentListResponse getDocumentsByUser(CustomUserDetails user) {
-        String userId = user.getUsername();
-        List<DocumentMetadata> documents = documentRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        String username = user.getUsername();
+        List<DocumentMetadata> documents = documentRepository.findByUserIdOrderByCreatedAtDesc(username);
         
         Long totalChunks = documents.stream()
                 .filter(doc -> doc.getStatus() == DocumentMetadata.DocumentStatus.COMPLETED)
@@ -357,7 +357,7 @@ public class RagService {
                 .orElseThrow(() -> new GlobalException("DOCUMENT_NOT_FOUND","Document not found with id: " + documentId));
 
         // 권한 체크: 문서 업로드한 유저가 아니면 예외 발생
-        if(!document.getUserId().equals(customUserDetails.getUsername())){
+        if(!document.getUsername().equals(customUserDetails.getUsername())){
             throw new GlobalException("유저_권한없음","파일을 업로드 한 유저만 삭제할 수 있습니다.",HttpStatus.UNAUTHORIZED);
         }
 
@@ -417,7 +417,7 @@ public class RagService {
 
     // ========== Private Helper Methods ==========
 
-    private DocumentMetadata createDocumentEntity(MultipartFile file, String userId) {
+    private DocumentMetadata createDocumentEntity(MultipartFile file, String username) {
         String fileName = file.getOriginalFilename();
         String fileType = getFileExtension(fileName);
 
@@ -426,7 +426,7 @@ public class RagService {
                 .documentType(fileType)
                 .fileSize(file.getSize())
                 .status(DocumentMetadata.DocumentStatus.PROCESSING)
-                .userId(userId)
+                .username(username)
                 .build();
     }
 
