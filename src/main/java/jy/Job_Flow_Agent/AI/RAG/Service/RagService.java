@@ -319,7 +319,7 @@ public class RagService {
      */
     public RagDTO.DocumentListResponse getDocumentsByUser(CustomUserDetails user) {
         String username = user.getUsername();
-        List<DocumentMetadata> documents = documentRepository.findByUserIdOrderByCreatedAtDesc(username);
+        List<DocumentMetadata> documents = documentRepository.findByUsernameOrderByCreatedAtDesc(username);
         
         Long totalChunks = documents.stream()
                 .filter(doc -> doc.getStatus() == DocumentMetadata.DocumentStatus.COMPLETED)

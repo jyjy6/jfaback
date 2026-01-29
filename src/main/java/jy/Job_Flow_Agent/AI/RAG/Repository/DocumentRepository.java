@@ -63,11 +63,11 @@ public interface DocumentRepository extends JpaRepository<DocumentMetadata, Long
     /**
      * 사용자별 문서 목록 조회
      */
-    List<DocumentMetadata> findByUserIdOrderByCreatedAtDesc(String userId);
+    List<DocumentMetadata> findByUsernameOrderByCreatedAtDesc(String username);
 
     /**
      * 사용자별 완료된 문서 목록 조회
      */
-    @Query("SELECT d FROM DocumentMetadata d WHERE d.userId = :userId AND d.status = 'COMPLETED' ORDER BY d.createdAt DESC")
-    List<DocumentMetadata> findCompletedDocumentsByUserId(@Param("userId") String userId);
+    @Query("SELECT d FROM DocumentMetadata d WHERE d.username = :username AND d.status = 'COMPLETED' ORDER BY d.createdAt DESC")
+    List<DocumentMetadata> findCompletedDocumentsByUsername(@Param("username") String username);
 }
