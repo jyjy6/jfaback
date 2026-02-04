@@ -15,6 +15,7 @@ import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.pinecone.PineconeEmbeddingStore;
 import jy.Job_Flow_Agent.AI.AssistantModels.Assistant;
 import jy.Job_Flow_Agent.AI.AssistantModels.StreamingAssistant;
+import jy.Job_Flow_Agent.AI.Tools.JobScrappingTools;
 import jy.Job_Flow_Agent.AI.Tools.MemberSearchTools;
 import jy.Job_Flow_Agent.AI.Tools.RagTools;
 import jy.Job_Flow_Agent.AI.Tools.UtilTools;
@@ -61,7 +62,8 @@ public class LangChainConfig {
     @Bean("assistant")
     public Assistant assistant(MemberSearchTools memberSearchTools,
                                UtilTools utilTools,
-                               RagTools ragTools) {
+                               RagTools ragTools,
+                               JobScrappingTools jobScrappingTools) {
         if (apiKey == null) {
             throw new GlobalException("GEMINI_API_KEY_ERROR", "GEMINI_API_KEY not set in environment variables", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -77,7 +79,7 @@ public class LangChainConfig {
 
         return AiServices.builder(Assistant.class)
                 .chatLanguageModel(model)
-                .tools(memberSearchTools, utilTools, ragTools) // 도구 등록 (RagTools 추가)
+                .tools(memberSearchTools, utilTools, ragTools, jobScrappingTools) // 도구 등록 (RagTools 추가)
                 .chatMemoryProvider(username -> MessageWindowChatMemory.builder()
                         .id(username)
                         .maxMessages(20)
