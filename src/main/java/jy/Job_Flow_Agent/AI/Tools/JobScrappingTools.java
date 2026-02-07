@@ -2,17 +2,16 @@ package jy.Job_Flow_Agent.AI.Tools;
 
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.P;
+import jy.Job_Flow_Agent.AI.DTO.JobPostingInfo;
 import jy.Job_Flow_Agent.AI.Service.JobScrappingService;
-import jy.Job_Flow_Agent.AI.Service.JobScrappingService.jobScrappingDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 /**
- * LangChain4j 툴: 채용 공고 웹 스크래핑 기능
- * 
- * AI 어시스턴트가 사용자가 제공한 채용 공고 URL을 스크래핑하여
- * 실시간으로 공고 내용을 분석할 수 있도록 하는 툴입니다.
+ * LangChain4j 툴: 채용 공고 웹 스크래핑 및 구조화 기능
  */
 @Slf4j
 @Component
@@ -22,45 +21,61 @@ public class JobScrappingTools {
     private final JobScrappingService jobScrappingService;
 
     /**
-     * 채용 공고 URL을 스크래핑하여 제목과 본문 내용을 추출합니다.
-     * 
-     * 사용 시나리오:
-     * - 사용자가 "이 공고 분석해줘: https://..." 같은 요청을 할 때
-     * - "이 링크의 채용 공고를 내 이력서와 비교해줘" 같은 요청이 들어올 때
-     * - "이 공고에 어떤 자격 요건이 있는지 알려줘" 같은 요청이 들어올 때
-     * 
-     * @param url 스크래핑할 채용 공고 URL (잡코리아, 사람인 등)
-     * @return 스크래핑된 채용 공고 내용 (제목과 본문)
+     * 채용 공고 URL을 스크래핑하고 구조화된 정보로 변환합니다.
      */
-    @Tool("사용자가 제공한 채용 공고 URL을 스크래핑하여 내용을 가져옵니다. " +
-          "사용자가 채용 공고 링크를 공유하거나, 특정 공고에 대한 분석을 요청할 때 이 도구를 사용하세요. " +
-          "URL이 메시지에 포함되어 있으면 자동으로 스크래핑하여 분석합니다. " +
-          "예: '이 공고 분석해줘:', '이 링크 봐줄래?', '이 채용 공고 어때?' 등")
+    @Tool("""
+          사용자가 제공한 채용 공고 URL을 스크래핑하여 핵심 정보를 분석합니다. 
+          사용자가 채용 공고 링크를 공유하거나 분석을 요청할 때 사용하세요. 
+          반환된 정보는 이미 구조화되어 있으므로, 이를 바탕으로 바로 답변하면 됩니다.
+          """)
     public String scrapeJobPosting(@P("스크래핑할 채용 공고 URL") String url) {
         
         log.info("🌐 Job Scraping Tool 호출 - URL: '{}'", url);
         
         try {
-            // JobScrappingService를 통해 스크래핑
-            jobScrappingDTO result = jobScrappingService.jobScrapping(url);
+            // 1. 서비스 호출 (스크래핑 + AI 구조화)
+            JobPostingInfo info = jobScrappingService.jobScrapping(url);
             
-            // AI가 읽기 쉬운 형태로 변환
-            StringBuilder formattedResult = new StringBuilder();
-            formattedResult.append("【채용 공고 정보】\n\n");
-            formattedResult.append("제목: ").append(result.getTitle()).append("\n\n");
-            formattedResult.append("본문 내용:\n");
-            formattedResult.append(result.getBodyText());
-            formattedResult.append("\n\n【출처】\n");
-            formattedResult.append("URL: ").append(url);
+            // 2. AI(Chat Model)에게 전달할 깔끔한 포맷 생성
+            StringBuilder sb = new StringBuilder();
+            sb.append("【채용 공고 분석 결과】\n");
+            sb.append("--------------------------------------------------\n");
+            sb.append("■ 회사명: ").append(info.companyName()).append("\n");
+            sb.append("■ 공고명: ").append(info.title()).append("\n");
+            sb.append("■ 위치: ").append(info.location()).append("\n");
+            sb.append("■ 마감일: ").append(info.deadline()).append("\n");
+            sb.append("■ 연봉: ").append(info.salary()).append("\n");
             
-            log.info("✅ 스크래핑 성공 - 제목: {}, 본문 길이: {}자", 
-                    result.getTitle(), result.getBodyText().length());
+            sb.append("\n[기술 스택]\n");
+            if (info.techStack() != null) {
+                info.techStack().forEach(stack -> sb.append("- ").append(stack).append("\n"));
+            }
+
+            sb.append("\n[주요 업무]\n");
+            if (info.majorTasks() != null) {
+                info.majorTasks().forEach(task -> sb.append("- ").append(task).append("\n"));
+            }
+
+            sb.append("\n[자격 요건]\n");
+            if (info.requirements() != null) {
+                info.requirements().forEach(req -> sb.append("- ").append(req).append("\n"));
+            }
+
+            sb.append("\n[우대 사항]\n");
+            if (info.preferredSkills() != null) {
+                info.preferredSkills().forEach(pref -> sb.append("- ").append(pref).append("\n"));
+            }
+            sb.append("--------------------------------------------------\n");
+            sb.append("출처: ").append(url);
             
-            return formattedResult.toString();
+            log.info("✅ 분석 완료 및 반환 - 회사: {}, 기술스택 수: {}", 
+                    info.companyName(), (info.techStack() != null ? info.techStack().size() : 0));
+            
+            return sb.toString();
             
         } catch (Exception e) {
-            log.error("❌ 채용 공고 스크래핑 실패 - URL: {}", url, e);
-            return "채용 공고 스크래핑에 실패했습니다. URL을 확인해주세요: " + e.getMessage();
+            log.error("❌ 채용 공고 처리 실패 - URL: {}", url, e);
+            return "채용 공고를 분석하는 중 오류가 발생했습니다. (원인: " + e.getMessage() + ")";
         }
     }
 }

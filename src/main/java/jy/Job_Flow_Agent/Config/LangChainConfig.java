@@ -29,6 +29,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 
+import jy.Job_Flow_Agent.AI.Service.JobAnalyzer;
+
 @Slf4j
 @RequiredArgsConstructor
 @Configuration
@@ -52,6 +54,27 @@ public class LangChainConfig {
 
     @Value("${pinecone.environment:}")
     private String pineconeEnvironment;
+    
+    /**
+     * 채용공고 분석 전용 AI 서비스
+     * (JSON 구조화 출력을 위해 별도 모델/설정 사용 가능)
+     */
+    @Bean
+    public JobAnalyzer jobAnalyzer() {
+        if (apiKey == null) {
+            throw new GlobalException("GEMINI_API_KEY_ERROR", "GEMINI_API_KEY not set", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // 구조화된 데이터 추출에는 일반 ChatModel을 사용하되, 
+        // LangChain4j가 내부적으로 JSON 스키마를 유도하여 추출함.
+        GoogleAiGeminiChatModel model = GoogleAiGeminiChatModel.builder()
+                .apiKey(apiKey)
+                .modelName("gemini-2.5-pro") 
+                .temperature(0.0) // 정형 데이터 추출이므로 창의성(Temperature)을 0으로 설정
+                .build();
+
+        return AiServices.create(JobAnalyzer.class, model);
+    }
 
 
     /**
@@ -125,14 +148,12 @@ public class LangChainConfig {
             throw new GlobalException("GEMINI_API_KEY_ERROR", "GEMINI_API_KEY not set in environment variables", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        // Gemini text-embedding-004 모델은 기본 768차원입니다. 
-        // Pinecone 인덱스를 생성할 때 반드시 Dimensions를 768로 설정해야 합니다. gemini-embedding-001이건 3072차원
-        // (1024차원은 지원하지 않으므로 인덱스 재생성이 필요합니다.)
-        String modelName = "text-embedding-004";
+        String modelName = "gemini-embedding-001";
         log.info("🧠 Embedding Model 초기화 - Google AI ({})", modelName);
 
         return GoogleAiEmbeddingModel.builder()
                 .apiKey(apiKey)
+                .outputDimensionality(768)
                 .modelName(modelName)
                 .build();
     }
