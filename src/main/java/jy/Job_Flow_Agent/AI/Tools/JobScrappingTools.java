@@ -78,4 +78,16 @@ public class JobScrappingTools {
             return "채용 공고를 분석하는 중 오류가 발생했습니다. (원인: " + e.getMessage() + ")";
         }
     }
+
+    /**
+     * 채용 공고 URL을 스크래핑하고 구조화된 정보로 변환합니다.
+     */
+    @Tool("""
+          사용자가 제공한 채용 공고 URL을 스크래핑하여 핵심 정보의 DTO를 반환합니다.
+          """)
+    public JobPostingInfo returnJobInfo(@P("스크래핑할 채용 공고 URL") String url) {
+        return jobScrappingService.jobScrapping(url);
+    }
+
+
 }

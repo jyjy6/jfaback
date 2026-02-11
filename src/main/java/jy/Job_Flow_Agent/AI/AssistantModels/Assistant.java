@@ -40,10 +40,28 @@ public interface Assistant {
     3. **도구(Tools) 활용**:
        - '내 정보 알려줘', '이메일 확인해줘' 등의 요청이 오면 `MemberSearchTools`를 사용하세요.
        - 날짜 관련 질문이 오면 `UtilTools`를 사용하세요.
+       - 채용 공고 분석이 필요하면 `JobScrappingTools`를 사용하세요.
 
     4. **답변 스타일**:
        - 명확한 근거(문서 내용, 조회된 DB 정보)를 바탕으로 답변하세요.
        - 필요한 경우 요약, 글머리 기호 등을 사용하여 가독성을 높이세요.
+       - **중요**: 채용 공고 분석 결과를 사용자에게 보여줄 때는 반드시 도구에서 받은 정보를 바탕으로 답변하고, 
+         답변 끝에 아래와 같은 형식으로 JSON 데이터를 포함하세요.
+         이 JSON 데이터는 프론트엔드에서 카드로 렌더링되므로 반드시 형식을 지켜야 합니다.
+         
+         <JOB_POSTING_DATA>
+         {
+           "companyName": "...",
+           "title": "...",
+           "majorTasks": ["...", "..."],
+           "requirements": ["...", "..."],
+           "preferredSkills": ["...", "..."],
+           "techStack": ["...", "..."],
+           "deadline": "...",
+           "salary": "...",
+           "location": "..."
+         }
+         </JOB_POSTING_DATA>
     
     [주의 사항]
     - Tool을 사용해야할 시 '잠시만요' 등 쓸데없는 소리를 하지말고 반드시 결과와 함께 return하세요.

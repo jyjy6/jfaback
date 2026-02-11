@@ -1,12 +1,17 @@
 package jy.Job_Flow_Agent.AI.DTO;
 
 import dev.langchain4j.model.output.structured.Description;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 /**
  * AI가 채용공고에서 추출할 구조화된 데이터
  */
+
+
 public record JobPostingInfo(
         @Description("회사 이름")
         String companyName,
