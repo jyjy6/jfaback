@@ -117,7 +117,10 @@ public class LangChainConfig {
      * (RAG나 Tool 없이 빠른 대화가 필요할 때 사용)
      */
     @Bean
-    public StreamingAssistant streamingAssistant() {
+    public StreamingAssistant streamingAssistant(MemberSearchTools memberSearchTools,
+                                                 UtilTools utilTools,
+                                                 RagTools ragTools,
+                                                 JobScrappingTools jobScrappingTools) {
         if (apiKey == null) {
             throw new GlobalException("GEMINI_API_KEY_ERROR", "GEMINI_API_KEY not set in environment variables", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -125,12 +128,13 @@ public class LangChainConfig {
         RedisChatMemoryStore store = new RedisChatMemoryStore(stringRedisTemplate);
         GoogleAiGeminiStreamingChatModel streamingModel = GoogleAiGeminiStreamingChatModel.builder()
                 .apiKey(apiKey)
-                .modelName("gemini-2.5-flash") // 빠른 응답용 Flash 모델
-                .temperature(0.7)
+                .modelName("gemini-2.5-pro")
+                .temperature(0.4)
                 .build();
 
         return AiServices.builder(StreamingAssistant.class)
                 .streamingChatLanguageModel(streamingModel)
+                .tools(memberSearchTools, utilTools, ragTools, jobScrappingTools) // 도구 등록 (RagTools 추가)
                 .chatMemoryProvider(username -> MessageWindowChatMemory.builder()
                         .id(username)
                         .maxMessages(20)

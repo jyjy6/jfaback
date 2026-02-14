@@ -86,6 +86,7 @@ public class JobScrappingTools {
           사용자가 제공한 채용 공고 URL을 스크래핑하여 핵심 정보의 DTO를 반환합니다.
           """)
     public JobPostingInfo returnJobInfo(@P("스크래핑할 채용 공고 URL") String url) {
+        log.info("returnJobInfo 가동->>> JobScrappingTools 핵심정보 DTO 반환 합니다.");
         return jobScrappingService.jobScrapping(url);
     }
 
