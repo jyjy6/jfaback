@@ -33,8 +33,11 @@ import jy.Job_Flow_Agent.AI.Service.JobAnalyzer;
 @RequiredArgsConstructor
 @Configuration
 public class LangChainConfig {
-    @Value("${openai.api.key}")
+    @Value("${google.gemini.api.key}")
     String apiKey;
+
+    @Value("${openai.api.key}")
+    String openAiApiKey;
 
     private final StringRedisTemplate stringRedisTemplate;
 
@@ -128,7 +131,7 @@ public class LangChainConfig {
 
         RedisChatMemoryStore store = new RedisChatMemoryStore(stringRedisTemplate);
         OpenAiStreamingChatModel streamingModel =OpenAiStreamingChatModel.builder()
-                .apiKey(apiKey)
+                .apiKey(openAiApiKey)
                 .modelName("gpt-4o-mini")
                 .temperature(0.0)
                 .build();
