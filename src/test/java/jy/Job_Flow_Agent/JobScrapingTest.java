@@ -1,7 +1,9 @@
 package jy.Job_Flow_Agent;
 
 
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -20,7 +22,7 @@ import java.io.IOException;
 public class JobScrapingTest {
 
     // application-dev.properties에 설정된 키(google.gemini.api.key)를 우선 사용
-    @Value("${google.gemini.api.key}")
+    @Value("${openai.api.key}")
     private String geminiApiKey;
 
     
@@ -59,7 +61,8 @@ public class JobScrapingTest {
                         .build();
 
                 String prompt = "다음 채용 공고 내용을 3줄로 요약해줘:\n\n" + bodyText;
-                String response = model.generate(prompt);
+                ChatResponse chatResponse = model.chat(UserMessage.from(prompt));
+                String response = chatResponse.aiMessage().text();
 
                 log.info(">>> Gemini 응답:\n{}", response);
             } else {

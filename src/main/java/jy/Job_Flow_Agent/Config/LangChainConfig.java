@@ -7,6 +7,7 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.googleai.GoogleAiEmbeddingModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
@@ -32,7 +33,7 @@ import jy.Job_Flow_Agent.AI.Service.JobAnalyzer;
 @RequiredArgsConstructor
 @Configuration
 public class LangChainConfig {
-    @Value("${google.gemini.api.key}")
+    @Value("${openai.api.key}")
     String apiKey;
 
     private final StringRedisTemplate stringRedisTemplate;
@@ -126,9 +127,9 @@ public class LangChainConfig {
         }
 
         RedisChatMemoryStore store = new RedisChatMemoryStore(stringRedisTemplate);
-        GoogleAiGeminiStreamingChatModel streamingModel = GoogleAiGeminiStreamingChatModel.builder()
+        OpenAiStreamingChatModel streamingModel =OpenAiStreamingChatModel.builder()
                 .apiKey(apiKey)
-                .modelName("gemini-2.5-pro")
+                .modelName("gpt-4o-mini")
                 .temperature(0.0)
                 .build();
 
