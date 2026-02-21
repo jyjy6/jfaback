@@ -15,22 +15,22 @@
 - **이력서/문서 업로드 및 RAG 인덱싱**
   - 사용자가 업로드한 문서를 청크 분할 후 임베딩하여 벡터 스토어(Pinecone)에 저장
   - 사용자별 메타데이터(`username`) 필터링으로 개인화 검색
-  - 이미지: `<img src="https://placehold.co/1200x600/png?text=README+Image+Test" alt="업로드 화면 + 청크/임베딩 처리 흐름도" width="800" />`
+  - 이미지: <img src="https://placehold.co/1200x600/png?text=README+Image+Test" alt="업로드 화면 + 청크/임베딩 처리 흐름도" width="800" />
   - 설명(예정): 어떤 형식의 문서를 어떻게 벡터화하는지 요약
 - **AI 취업 코칭 대화**
   - `/api/v1/ai/chat` SSE 스트리밍 응답
   - 부분 토큰을 실시간 렌더링하고, 필요 시 Tool 호출 결과를 UI 이벤트로 전송
-  - 이미지: `<img src="https://placehold.co/1200x600/png?text=README+Image+Test" alt="채팅 화면 + message/ui_render 이벤트 예시 캡처" width="800" />`
+  - 이미지: <img src="https://placehold.co/1200x600/png?text=README+Image+Test" alt="채팅 화면 + message/ui_render 이벤트 예시 캡처" width="800" />
   - 설명(예정): 스트리밍 응답과 UI 카드 렌더링 동작 방식
 - **채용공고 URL 분석**
   - Jsoup 기반 스크래핑 후 AI 구조화 분석
   - 회사명/기술스택/자격요건/우대사항 등 추출
-  - 이미지: `<img src="https://placehold.co/1200x600/png?text=README+Image+Test" alt="채용공고 링크 입력 전/후 비교 화면" width="800" />`
+  - 이미지: <img src="https://placehold.co/1200x600/png?text=README+Image+Test" alt="채용공고 링크 입력 전/후 비교 화면" width="800" />
   - 설명(예정): 스크래핑 텍스트가 구조화 데이터로 변환되는 과정
 - **문서 관리**
   - 내 문서 목록 조회, 검색, 삭제
   - 삭제 시 DB 메타데이터 + Pinecone 벡터 삭제 처리
-  - 이미지: `<img src="https://placehold.co/1200x600/png?text=README+Image+Test" alt="문서 목록/삭제 확인 다이얼로그/삭제 결과 화면" width="800" />`
+  - 이미지: <img src="https://placehold.co/1200x600/png?text=README+Image+Test" alt="문서 목록/삭제 확인 다이얼로그/삭제 결과 화면" width="800" />
   - 설명(예정): 문서 생명주기(업로드 → 조회 → 삭제) 요약
 
 ---
