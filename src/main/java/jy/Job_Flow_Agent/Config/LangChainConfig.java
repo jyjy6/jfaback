@@ -7,6 +7,7 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.googleai.GoogleAiEmbeddingModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
@@ -15,10 +16,7 @@ import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.pinecone.PineconeEmbeddingStore;
 import jy.Job_Flow_Agent.AI.AssistantModels.Assistant;
 import jy.Job_Flow_Agent.AI.AssistantModels.StreamingAssistant;
-import jy.Job_Flow_Agent.AI.Tools.JobScrappingTools;
-import jy.Job_Flow_Agent.AI.Tools.MemberSearchTools;
-import jy.Job_Flow_Agent.AI.Tools.RagTools;
-import jy.Job_Flow_Agent.AI.Tools.UtilTools;
+import jy.Job_Flow_Agent.AI.Tools.*;
 import jy.Job_Flow_Agent.GlobalErrorHandler.GlobalException;
 import jy.Job_Flow_Agent.Redis.RedisChatMemoryStore;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +35,9 @@ import jy.Job_Flow_Agent.AI.Service.JobAnalyzer;
 public class LangChainConfig {
     @Value("${google.gemini.api.key}")
     String apiKey;
+
+    @Value("${openai.api.key}")
+    String openAiApiKey;
 
     private final StringRedisTemplate stringRedisTemplate;
 
@@ -67,10 +68,11 @@ public class LangChainConfig {
 
         // 구조화된 데이터 추출에는 일반 ChatModel을 사용하되, 
         // LangChain4j가 내부적으로 JSON 스키마를 유도하여 추출함.
-        GoogleAiGeminiChatModel model = GoogleAiGeminiChatModel.builder()
-                .apiKey(apiKey)
-                .modelName("gemini-2.5-pro") 
-                .temperature(0.0) // 정형 데이터 추출이므로 창의성(Temperature)을 0으로 설정
+                GoogleAiGeminiChatModel model = GoogleAiGeminiChatModel.builder()
+                        .apiKey(apiKey)
+                        .modelName("gemini-2.5-pro")
+                        .temperature(0.0) 
+         // 정형 데이터 추출이므로 창의성(Temperature)을 0으로 설정
                 .build();
 
         return AiServices.create(JobAnalyzer.class, model);
@@ -86,7 +88,8 @@ public class LangChainConfig {
     public Assistant assistant(MemberSearchTools memberSearchTools,
                                UtilTools utilTools,
                                RagTools ragTools,
-                               JobScrappingTools jobScrappingTools) {
+                               JobScrappingTools jobScrappingTools,
+                               UserInterfaceTools userInterfaceTools) {
         if (apiKey == null) {
             throw new GlobalException("GEMINI_API_KEY_ERROR", "GEMINI_API_KEY not set in environment variables", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -97,12 +100,12 @@ public class LangChainConfig {
         GoogleAiGeminiChatModel model = GoogleAiGeminiChatModel.builder()
                 .apiKey(apiKey)
                 .modelName("gemini-2.5-pro")
-                .temperature(0.4)
+                .temperature(0.0)
                 .build();
 
         return AiServices.builder(Assistant.class)
                 .chatLanguageModel(model)
-                .tools(memberSearchTools, utilTools, ragTools, jobScrappingTools) // 도구 등록 (RagTools 추가)
+                .tools(memberSearchTools, utilTools, ragTools, jobScrappingTools, userInterfaceTools) // 도구 등록
                 .chatMemoryProvider(username -> MessageWindowChatMemory.builder()
                         .id(username)
                         .maxMessages(20)
@@ -120,21 +123,22 @@ public class LangChainConfig {
     public StreamingAssistant streamingAssistant(MemberSearchTools memberSearchTools,
                                                  UtilTools utilTools,
                                                  RagTools ragTools,
-                                                 JobScrappingTools jobScrappingTools) {
+                                                 JobScrappingTools jobScrappingTools,
+                                                 UserInterfaceTools userInterfaceTools) {
         if (apiKey == null) {
             throw new GlobalException("GEMINI_API_KEY_ERROR", "GEMINI_API_KEY not set in environment variables", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         RedisChatMemoryStore store = new RedisChatMemoryStore(stringRedisTemplate);
-        GoogleAiGeminiStreamingChatModel streamingModel = GoogleAiGeminiStreamingChatModel.builder()
-                .apiKey(apiKey)
-                .modelName("gemini-2.5-pro")
-                .temperature(0.4)
+        OpenAiStreamingChatModel streamingModel =OpenAiStreamingChatModel.builder()
+                .apiKey(openAiApiKey)
+                .modelName("gpt-4o-mini")
+                .temperature(0.0)
                 .build();
 
         return AiServices.builder(StreamingAssistant.class)
                 .streamingChatLanguageModel(streamingModel)
-                .tools(memberSearchTools, utilTools, ragTools, jobScrappingTools) // 도구 등록 (RagTools 추가)
+                .tools(memberSearchTools, utilTools, ragTools, jobScrappingTools, userInterfaceTools) // 도구 등록
                 .chatMemoryProvider(username -> MessageWindowChatMemory.builder()
                         .id(username)
                         .maxMessages(20)
