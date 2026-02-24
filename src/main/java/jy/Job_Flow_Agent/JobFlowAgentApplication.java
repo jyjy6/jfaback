@@ -13,6 +13,8 @@ public class JobFlowAgentApplication {
 
 		log.info("안녕하세요! JobFlowAgent Activated!");
 
+		
+
 	}
 
 }
