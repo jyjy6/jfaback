@@ -2,6 +2,8 @@ package jy.Job_Flow_Agent.auth;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.impl.DefaultClaims;
+import java.util.HashMap;
+import java.util.Map;
 import jy.Job_Flow_Agent.Auth.JWT.JWTFilter;
 import jy.Job_Flow_Agent.Auth.JWT.JWTUtil;
 import jy.Job_Flow_Agent.Member.Entity.Member;
@@ -175,9 +177,10 @@ class JWTFilterTest {
                 "{\"id\":1,\"username\":\"%s\",\"displayName\":\"테스트\",\"roleSet\":[%s]}",
                 username, roleStr
         );
-        DefaultClaims claims = new DefaultClaims();
-        claims.setSubject(username);
-        claims.put("userInfo", userInfoJson);
-        return claims;
+        // jjwt 0.12.x: no-arg 생성자 및 setSubject() 제거됨 → Map 생성자 사용
+        Map<String, Object> claimsMap = new HashMap<>();
+        claimsMap.put(Claims.SUBJECT, username); // "sub"
+        claimsMap.put("userInfo", userInfoJson);
+        return new DefaultClaims(claimsMap);
     }
 }

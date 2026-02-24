@@ -24,7 +24,7 @@ class UtilToolsTest {
         LocalDate after = LocalDate.now();
 
         assertThat(result).isNotNull();
-        assertThat(result).isGreaterThanOrEqualTo(before);
-        assertThat(result).isLessThanOrEqualTo(after);
+        assertThat(result).isAfterOrEqualTo(before);
+        assertThat(result).isBeforeOrEqualTo(after);
     }
 }

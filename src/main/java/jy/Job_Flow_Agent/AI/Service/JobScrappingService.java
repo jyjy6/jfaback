@@ -49,7 +49,7 @@ public class JobScrappingService {
 
         } catch (Exception e){
             log.error("❌ 크롤링 및 분석 실패: {}", e.getMessage(), e);
-            throw new GlobalException("JOB_SCRAPPING_ERROR", "채용 공고 분석 중 오류가 발생했습니다: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new GlobalException("채용 공고 분석 중 오류가 발생했습니다: " + e.getMessage(), "JOB_SCRAPPING_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

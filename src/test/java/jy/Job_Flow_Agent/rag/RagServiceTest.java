@@ -226,7 +226,8 @@ class RagServiceTest {
 
         // when & then
         assertThatThrownBy(() -> ragService.deleteDocument(60L, testUser()))
-                .isInstanceOf(GlobalException.class);
+                .isInstanceOf(GlobalException.class)
+                .satisfies(ex -> assertThat(((GlobalException) ex).getErrorCode()).isEqualTo("UNAUTHORIZED_DOCUMENT_DELETE"));
 
         then(documentRepository).should(never()).delete(any());
         then(embeddingStore).should(never()).removeAll(anyList());

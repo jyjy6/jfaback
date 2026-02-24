@@ -126,7 +126,7 @@ public class RagService {
 
         } catch (Exception e) {
             log.error("Error during document ingestion", e);
-            throw new GlobalException("INGEST_DOCUMENT_ERROR", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new GlobalException(e.getMessage(), "INGEST_DOCUMENT_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -191,7 +191,7 @@ public class RagService {
 
         } catch (Exception e) {
             log.error("Error during text ingestion", e);
-            throw new GlobalException("INGEST_TEXT_ERROR", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new GlobalException(e.getMessage(), "INGEST_TEXT_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -250,7 +250,7 @@ public class RagService {
 
         } catch (Exception e) {
             log.error("Error during question answering", e);
-            throw new GlobalException("ASK_RESPONSE_ERROR", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new GlobalException(e.getMessage(), "ASK_RESPONSE_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -292,7 +292,7 @@ public class RagService {
 
         } catch (Exception e) {
             log.error("Error during document search", e);
-            throw new GlobalException("SEARCH_DOCUMENT_ERROR", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new GlobalException(e.getMessage(), "SEARCH_DOCUMENT_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -342,7 +342,7 @@ public class RagService {
      */
     public RagDTO.DocumentInfo getDocument(Long documentId) {
         DocumentMetadata document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new GlobalException("DOCUMENT_NOT_FOUND","Document not found with id: " + documentId));
+                .orElseThrow(() -> new GlobalException("Document not found with id: " + documentId, "DOCUMENT_NOT_FOUND"));
         return toDocumentInfo(document);
     }
 
@@ -354,11 +354,11 @@ public class RagService {
     @Transactional
     public RagDTO.DeleteResponse deleteDocument(Long documentId, CustomUserDetails customUserDetails) {
         DocumentMetadata document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new GlobalException("DOCUMENT_NOT_FOUND","Document not found with id: " + documentId));
+                .orElseThrow(() -> new GlobalException("Document not found with id: " + documentId, "DOCUMENT_NOT_FOUND"));
 
         // 권한 체크: 문서 업로드한 유저가 아니면 예외 발생
         if(!document.getUsername().equals(customUserDetails.getUsername())){
-            throw new GlobalException("유저_권한없음","파일을 업로드 한 유저만 삭제할 수 있습니다.",HttpStatus.UNAUTHORIZED);
+            throw new GlobalException("파일을 업로드 한 유저만 삭제할 수 있습니다.", "UNAUTHORIZED_DOCUMENT_DELETE", HttpStatus.UNAUTHORIZED);
         }
 
         String documentName = document.getDocumentName();
@@ -402,8 +402,9 @@ public class RagService {
             
         } catch (Exception e) {
             log.error("Error deleting vectors from Pinecone for document_id: {}", documentId, e);
-            throw new GlobalException("PINECONE_DELETE_ERROR", 
-                    "Pinecone 벡터 삭제 중 오류가 발생했습니다. DB 메타데이터는 유지됩니다: " + e.getMessage(), 
+            throw new GlobalException(
+                    "Pinecone 벡터 삭제 중 오류가 발생했습니다. DB 메타데이터는 유지됩니다: " + e.getMessage(),
+                    "PINECONE_DELETE_ERROR",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
